@@ -70,6 +70,7 @@ class SyncJobRepository:
 
     def delete_job(self, session: Session, job: SyncJob) -> None:
         session.delete(job)
+        session.flush()
 
     def list_due_jobs(self, session: Session, now: datetime | None = None) -> list[SyncJob]:
         current = now or datetime.now(timezone.utc)

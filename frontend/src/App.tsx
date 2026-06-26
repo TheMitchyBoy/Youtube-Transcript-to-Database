@@ -366,7 +366,11 @@ export default function App() {
                   <button className="btn btn-secondary" onClick={() => startEdit(job)}>
                     Edit
                   </button>
-                  <button className="btn btn-danger" onClick={() => handleDelete(job.id)}>
+                  <button
+                    className="btn btn-danger"
+                    type="button"
+                    onClick={() => handleDelete(job.id)}
+                  >
                     Delete
                   </button>
                 </div>

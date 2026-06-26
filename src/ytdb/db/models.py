@@ -103,14 +103,18 @@ class SyncJob(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    runs: Mapped[list[SyncRun]] = relationship(back_populates="job")
+    runs: Mapped[list[SyncRun]] = relationship(
+        back_populates="job", cascade="all, delete-orphan"
+    )
 
 
 class SyncRun(Base):
     __tablename__ = "sync_runs"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    job_id: Mapped[int] = mapped_column(ForeignKey("sync_jobs.id"), index=True)
+    job_id: Mapped[int] = mapped_column(
+        ForeignKey("sync_jobs.id", ondelete="CASCADE"), index=True
+    )
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     status: Mapped[str] = mapped_column(String(32))
