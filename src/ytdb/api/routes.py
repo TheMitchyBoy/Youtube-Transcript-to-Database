@@ -7,10 +7,13 @@ from ytdb.api.schemas import (
     FREQUENCY_CHOICES,
     ChannelSummary,
     FrequencyOption,
+    StatsResponse,
     SyncJobCreate,
     SyncJobResponse,
     SyncJobUpdate,
     SyncRunResponse,
+    TranscriptDetail,
+    TranscriptSummary,
 )
 from ytdb.config import get_settings
 from ytdb.db.job_repository import SyncJobRepository
@@ -34,6 +37,75 @@ def health() -> dict[str, str]:
 @router.get("/frequencies", response_model=list[FrequencyOption])
 def list_frequencies() -> list[FrequencyOption]:
     return [FrequencyOption(value=value, label=frequency_label(value)) for value in FREQUENCY_CHOICES]
+
+
+@router.get("/stats", response_model=StatsResponse)
+def get_stats() -> StatsResponse:
+    settings = get_settings()
+    repo = TranscriptRepository(settings.database_url)
+    with repo.session() as session:
+        return StatsResponse(**repo.get_stats(session))
+
+
+@router.get("/transcripts", response_model=list[TranscriptSummary])
+def list_transcripts(
+    search: str | None = None,
+    channel_id: int | None = None,
+    limit: int = 50,
+) -> list[TranscriptSummary]:
+    settings = get_settings()
+    repo = TranscriptRepository(settings.database_url)
+    with repo.session() as session:
+        rows = repo.search_transcripts(
+            session, search=search, channel_id=channel_id, limit=min(limit, 100)
+        )
+        return [
+            TranscriptSummary(
+                id=transcript.id,
+                video_id=video.id,
+                youtube_video_id=video.youtube_video_id,
+                video_title=video.title,
+                video_url=video.url,
+                content_type=video.content_type,
+                is_live=video.is_live,
+                channel_id=channel.id,
+                channel_name=channel.name,
+                language=transcript.language,
+                language_code=transcript.language_code,
+                is_auto_generated=transcript.is_auto_generated,
+                preview=transcript.content[:200].replace("\n", " "),
+                fetched_at=transcript.fetched_at,
+            )
+            for transcript, video, channel in rows
+        ]
+
+
+@router.get("/transcripts/{transcript_id}", response_model=TranscriptDetail)
+def get_transcript(transcript_id: int) -> TranscriptDetail:
+    settings = get_settings()
+    repo = TranscriptRepository(settings.database_url)
+    with repo.session() as session:
+        row = repo.get_transcript(session, transcript_id)
+        if row is None:
+            raise HTTPException(status_code=404, detail="Transcript not found")
+        transcript, video, channel = row
+        return TranscriptDetail(
+            id=transcript.id,
+            video_id=video.id,
+            youtube_video_id=video.youtube_video_id,
+            video_title=video.title,
+            video_url=video.url,
+            content_type=video.content_type,
+            is_live=video.is_live,
+            channel_id=channel.id,
+            channel_name=channel.name,
+            language=transcript.language,
+            language_code=transcript.language_code,
+            is_auto_generated=transcript.is_auto_generated,
+            preview=transcript.content[:200].replace("\n", " "),
+            fetched_at=transcript.fetched_at,
+            content=transcript.content,
+        )
 
 
 @router.get("/channels", response_model=list[ChannelSummary])

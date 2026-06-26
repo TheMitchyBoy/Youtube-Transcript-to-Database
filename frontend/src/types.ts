@@ -44,6 +44,13 @@ export interface ChannelSummary {
   transcript_count: number;
 }
 
+export interface Stats {
+  channels: number;
+  videos: number;
+  transcripts: number;
+  sync_jobs: number;
+}
+
 export interface SyncJobInput {
   name?: string | null;
   channel_account: string;
@@ -55,4 +62,25 @@ export interface SyncJobInput {
   include_videos: boolean;
   include_streams: boolean;
   include_live: boolean;
+}
+
+export interface TranscriptSummary {
+  id: number;
+  video_id: number;
+  youtube_video_id: string;
+  video_title: string | null;
+  video_url: string;
+  content_type: string;
+  is_live: boolean;
+  channel_id: number;
+  channel_name: string | null;
+  language: string;
+  language_code: string;
+  is_auto_generated: boolean;
+  preview: string;
+  fetched_at: string;
+}
+
+export interface TranscriptDetail extends TranscriptSummary {
+  content: string;
 }

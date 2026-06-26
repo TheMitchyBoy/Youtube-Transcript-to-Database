@@ -1,9 +1,12 @@
 import type {
   ChannelSummary,
   FrequencyOption,
+  Stats,
   SyncJob,
   SyncJobInput,
   SyncRun,
+  TranscriptDetail,
+  TranscriptSummary,
 } from "./types";
 
 const API_BASE = "/api";
@@ -33,6 +36,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  getStats: () => request<Stats>("/stats"),
   listFrequencies: () => request<FrequencyOption[]>("/frequencies"),
   listChannels: () => request<ChannelSummary[]>("/channels"),
   listJobs: () => request<SyncJob[]>("/jobs"),
@@ -43,4 +47,13 @@ export const api = {
   deleteJob: (id: number) => request<void>(`/jobs/${id}`, { method: "DELETE" }),
   runJob: (id: number) => request<{ status: string }>(`/jobs/${id}/run`, { method: "POST" }),
   listRuns: (id: number) => request<SyncRun[]>(`/jobs/${id}/runs`),
+  listTranscripts: (params?: { search?: string; channel_id?: number; limit?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.search) query.set("search", params.search);
+    if (params?.channel_id !== undefined) query.set("channel_id", String(params.channel_id));
+    if (params?.limit !== undefined) query.set("limit", String(params.limit));
+    const suffix = query.toString() ? `?${query.toString()}` : "";
+    return request<TranscriptSummary[]>(`/transcripts${suffix}`);
+  },
+  getTranscript: (id: number) => request<TranscriptDetail>(`/transcripts/${id}`),
 };

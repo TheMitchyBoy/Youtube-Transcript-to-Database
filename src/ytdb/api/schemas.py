@@ -83,3 +83,31 @@ class ChannelSummary(BaseModel):
     transcript_count: int
 
     model_config = {"from_attributes": True}
+
+
+class StatsResponse(BaseModel):
+    channels: int
+    videos: int
+    transcripts: int
+    sync_jobs: int
+
+
+class TranscriptSummary(BaseModel):
+    id: int
+    video_id: int
+    youtube_video_id: str
+    video_title: str | None
+    video_url: str
+    content_type: str
+    is_live: bool
+    channel_id: int
+    channel_name: str | None
+    language: str
+    language_code: str
+    is_auto_generated: bool
+    preview: str
+    fetched_at: datetime
+
+
+class TranscriptDetail(TranscriptSummary):
+    content: str

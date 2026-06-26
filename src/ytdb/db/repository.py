@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from ytdb.db.engine import create_db_engine
 from ytdb.db.migrations import run_migrations
-from ytdb.db.models import Base, Channel, Transcript, Video
+from ytdb.db.models import Base, Channel, SyncJob, Transcript, Video
 from ytdb.youtube.transcripts import TranscriptData
 from ytdb.youtube.channel import ChannelInfo, VideoInfo
 
@@ -109,3 +109,48 @@ class TranscriptRepository:
             .join(Video)
             .where(Video.channel_id == channel_id)
         ) or 0
+
+    def get_stats(self, session: Session) -> dict[str, int]:
+        return {
+            "channels": session.scalar(select(func.count(Channel.id))) or 0,
+            "videos": session.scalar(select(func.count(Video.id))) or 0,
+            "transcripts": session.scalar(select(func.count(Transcript.id))) or 0,
+            "sync_jobs": session.scalar(select(func.count(SyncJob.id))) or 0,
+        }
+
+    def search_transcripts(
+        self,
+        session: Session,
+        *,
+        search: str | None = None,
+        channel_id: int | None = None,
+        limit: int = 50,
+    ) -> list[tuple[Transcript, Video, Channel]]:
+        query = (
+            select(Transcript, Video, Channel)
+            .join(Video, Transcript.video_id == Video.id)
+            .join(Channel, Video.channel_id == Channel.id)
+            .order_by(Transcript.fetched_at.desc())
+            .limit(limit)
+        )
+        if channel_id is not None:
+            query = query.where(Channel.id == channel_id)
+        if search:
+            pattern = f"%{search.strip()}%"
+            query = query.where(
+                or_(
+                    Transcript.content.ilike(pattern),
+                    Video.title.ilike(pattern),
+                    Channel.name.ilike(pattern),
+                )
+            )
+        return list(session.execute(query).all())
+
+    def get_transcript(self, session: Session, transcript_id: int) -> tuple[Transcript, Video, Channel] | None:
+        row = session.execute(
+            select(Transcript, Video, Channel)
+            .join(Video, Transcript.video_id == Video.id)
+            .join(Channel, Video.channel_id == Channel.id)
+            .where(Transcript.id == transcript_id)
+        ).first()
+        return row if row else None
