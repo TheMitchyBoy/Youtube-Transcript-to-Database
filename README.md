@@ -126,6 +126,7 @@ ytdb serve [--host 0.0.0.0] [--port 8000] [--reload]
 | Sync frequency | Manual, 15m, 30m, hourly, 6h, 12h, daily, weekly |
 | Max videos | Cap how many recent videos are checked each run |
 | Languages | Preferred caption languages (comma-separated) |
+| Content types | Currently live, past live streams, regular videos |
 | Enabled | Turn scheduled syncs on/off |
 | Force refresh | Re-download transcripts even if already stored |
 

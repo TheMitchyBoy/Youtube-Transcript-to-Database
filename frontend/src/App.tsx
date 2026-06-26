@@ -11,6 +11,9 @@ const defaultForm: SyncJobInput = {
   frequency: "24h",
   enabled: true,
   force_refresh: false,
+  include_videos: true,
+  include_streams: true,
+  include_live: true,
 };
 
 function formatDate(value: string | null) {
@@ -77,6 +80,9 @@ export default function App() {
       frequency: job.frequency,
       enabled: job.enabled,
       force_refresh: job.force_refresh,
+      include_videos: job.include_videos,
+      include_streams: job.include_streams,
+      include_live: job.include_live,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -228,6 +234,35 @@ export default function App() {
               <small>Comma-separated language codes. First match wins.</small>
             </div>
 
+            <div className="field">
+              <label>Content to sync</label>
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={form.include_live}
+                  onChange={(e) => setForm({ ...form, include_live: e.target.checked })}
+                />
+                Currently live broadcast
+              </label>
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={form.include_streams}
+                  onChange={(e) => setForm({ ...form, include_streams: e.target.checked })}
+                />
+                Past live streams
+              </label>
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={form.include_videos}
+                  onChange={(e) => setForm({ ...form, include_videos: e.target.checked })}
+                />
+                Regular uploaded videos
+              </label>
+              <small>Live streams re-fetch captions on every run while still broadcasting.</small>
+            </div>
+
             <label className="checkbox">
               <input
                 type="checkbox"
@@ -299,7 +334,10 @@ export default function App() {
 
                 <div className="pill-list">
                   <span className="pill">{frequencyMap[job.frequency] || job.frequency}</span>
-                  <span className="pill">{job.max_videos ?? "All"} videos</span>
+                  <span className="pill">{job.max_videos ?? "All"} items</span>
+                  {job.include_live && <span className="pill">Live</span>}
+                  {job.include_streams && <span className="pill">Streams</span>}
+                  {job.include_videos && <span className="pill">Videos</span>}
                   {job.languages.map((language) => (
                     <span className="pill" key={language}>
                       {language}

@@ -7,6 +7,9 @@ export interface SyncJob {
   frequency: string;
   enabled: boolean;
   force_refresh: boolean;
+  include_videos: boolean;
+  include_streams: boolean;
+  include_live: boolean;
   last_run_at: string | null;
   next_run_at: string | null;
   last_status: string;
@@ -49,4 +52,7 @@ export interface SyncJobInput {
   frequency: string;
   enabled: boolean;
   force_refresh: boolean;
+  include_videos: boolean;
+  include_streams: boolean;
+  include_live: boolean;
 }

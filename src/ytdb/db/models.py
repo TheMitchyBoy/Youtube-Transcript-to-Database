@@ -46,6 +46,8 @@ class Video(Base):
     title: Mapped[str | None] = mapped_column(String(1024))
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     url: Mapped[str] = mapped_column(String(512))
+    content_type: Mapped[str] = mapped_column(String(16), default="video")
+    is_live: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -87,6 +89,9 @@ class SyncJob(Base):
     frequency: Mapped[str] = mapped_column(String(32), default="manual")
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     force_refresh: Mapped[bool] = mapped_column(Boolean, default=False)
+    include_videos: Mapped[bool] = mapped_column(Boolean, default=True)
+    include_streams: Mapped[bool] = mapped_column(Boolean, default=True)
+    include_live: Mapped[bool] = mapped_column(Boolean, default=True)
     last_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     next_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_status: Mapped[str] = mapped_column(String(32), default="idle")

@@ -33,6 +33,9 @@ def run_sync_job(job_id: int) -> None:
             account = job.channel_account
             max_videos = job.max_videos
             force_refresh = job.force_refresh
+            include_videos = job.include_videos
+            include_streams = job.include_streams
+            include_live = job.include_live
             session.commit()
 
     try:
@@ -44,6 +47,9 @@ def run_sync_job(job_id: int) -> None:
             account,
             max_videos=max_videos,
             skip_existing=not force_refresh,
+            include_videos=include_videos,
+            include_streams=include_streams,
+            include_live=include_live,
         )
         message = (
             f"Processed {result.videos_processed} videos; "

@@ -78,6 +78,9 @@ def create_job(payload: SyncJobCreate) -> SyncJobResponse:
             frequency=payload.frequency,
             enabled=payload.enabled,
             force_refresh=payload.force_refresh,
+            include_videos=payload.include_videos,
+            include_streams=payload.include_streams,
+            include_live=payload.include_live,
         )
         session.commit()
         session.refresh(job)

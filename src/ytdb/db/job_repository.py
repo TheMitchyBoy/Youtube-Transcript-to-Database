@@ -29,6 +29,9 @@ class SyncJobRepository:
         frequency: str,
         enabled: bool,
         force_refresh: bool,
+        include_videos: bool = True,
+        include_streams: bool = True,
+        include_live: bool = True,
     ) -> SyncJob:
         job = SyncJob(
             name=name,
@@ -38,6 +41,9 @@ class SyncJobRepository:
             frequency=frequency,
             enabled=enabled,
             force_refresh=force_refresh,
+            include_videos=include_videos,
+            include_streams=include_streams,
+            include_live=include_live,
             last_status="idle",
             next_run_at=compute_next_run(frequency) if enabled and frequency != "manual" else None,
         )

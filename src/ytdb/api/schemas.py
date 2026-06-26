@@ -15,6 +15,9 @@ class SyncJobCreate(BaseModel):
     frequency: str = "manual"
     enabled: bool = True
     force_refresh: bool = False
+    include_videos: bool = True
+    include_streams: bool = True
+    include_live: bool = True
 
 
 class SyncJobUpdate(BaseModel):
@@ -25,6 +28,9 @@ class SyncJobUpdate(BaseModel):
     frequency: str | None = None
     enabled: bool | None = None
     force_refresh: bool | None = None
+    include_videos: bool | None = None
+    include_streams: bool | None = None
+    include_live: bool | None = None
 
 
 class SyncJobResponse(BaseModel):
@@ -36,6 +42,9 @@ class SyncJobResponse(BaseModel):
     frequency: str
     enabled: bool
     force_refresh: bool
+    include_videos: bool
+    include_streams: bool
+    include_live: bool
     last_run_at: datetime | None
     next_run_at: datetime | None
     last_status: str

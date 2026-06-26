@@ -64,7 +64,18 @@ def list_channels() -> None:
     is_flag=True,
     help="Re-fetch transcripts even if they already exist in the database.",
 )
-def sync(account: str, max_videos: int | None, languages: tuple[str, ...], force: bool) -> None:
+@click.option("--videos/--no-videos", default=True, help="Include regular uploaded videos.")
+@click.option("--streams/--no-streams", default=True, help="Include past live streams.")
+@click.option("--live/--no-live", default=True, help="Include the currently live broadcast.")
+def sync(
+    account: str,
+    max_videos: int | None,
+    languages: tuple[str, ...],
+    force: bool,
+    videos: bool,
+    streams: bool,
+    live: bool,
+) -> None:
     """Sync transcripts for a YouTube account/channel.
 
     ACCOUNT can be a channel URL, @handle, channel ID (UC...), or handle without @.
@@ -74,6 +85,9 @@ def sync(account: str, max_videos: int | None, languages: tuple[str, ...], force
         account,
         max_videos=max_videos,
         skip_existing=not force,
+        include_videos=videos,
+        include_streams=streams,
+        include_live=live,
     )
 
     click.echo(f"Channel: {result.channel.name} ({result.channel.channel_id})")

@@ -38,11 +38,21 @@ class SyncService:
         account: str,
         max_videos: int | None = None,
         skip_existing: bool = True,
+        *,
+        include_videos: bool = True,
+        include_streams: bool = True,
+        include_live: bool = True,
     ) -> SyncResult:
         self.repository.init_db()
 
         channel_info = self.channel_client.get_channel_info(account)
-        videos = self.channel_client.list_videos(account, max_videos=max_videos)
+        videos = self.channel_client.list_content(
+            account,
+            max_items=max_videos,
+            include_videos=include_videos,
+            include_streams=include_streams,
+            include_live=include_live,
+        )
 
         videos_processed = 0
         transcripts_saved = 0
@@ -56,7 +66,10 @@ class SyncService:
                 videos_processed += 1
                 try:
                     saved = self._process_video(
-                        session, channel, video_info, skip_existing=skip_existing
+                        session,
+                        channel,
+                        video_info,
+                        skip_existing=skip_existing,
                     )
                     if saved:
                         transcripts_saved += 1
@@ -86,7 +99,12 @@ class SyncService:
     ) -> bool:
         video = self.repository.upsert_video(session, channel, video_info)
 
-        if skip_existing and self.repository.has_transcript(session, video.id):
+        should_skip = (
+            skip_existing
+            and not video_info.is_live
+            and self.repository.has_transcript(session, video.id)
+        )
+        if should_skip:
             return False
 
         transcript = self.transcript_client.fetch_transcript(video_info.video_id)

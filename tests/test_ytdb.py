@@ -91,7 +91,7 @@ def test_sync_service_processes_videos(mock_get_settings, repository):
     channel_client.get_channel_info.return_value = ChannelInfo(
         "UCsyncchannel0000001", "Sync Channel", "https://youtube.com/@sync"
     )
-    channel_client.list_videos.return_value = [
+    channel_client.list_content.return_value = [
         VideoInfo("vid100", "One", None, "https://youtube.com/watch?v=vid100"),
         VideoInfo("vid200", "Two", None, "https://youtube.com/watch?v=vid200"),
     ]

@@ -6,6 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from ytdb.db.engine import create_db_engine
+from ytdb.db.migrations import run_migrations
 from ytdb.db.models import Base, Channel, Transcript, Video
 from ytdb.youtube.transcripts import TranscriptData
 from ytdb.youtube.channel import ChannelInfo, VideoInfo
@@ -18,6 +19,7 @@ class TranscriptRepository:
 
     def init_db(self) -> None:
         Base.metadata.create_all(self.engine)
+        run_migrations(self.engine.url.render_as_string(hide_password=False))
 
     def session(self) -> Session:
         return self._session_factory()
@@ -49,6 +51,8 @@ class TranscriptRepository:
             existing.published_at = video.published_at
             existing.url = video.url
             existing.channel_id = channel.id
+            existing.content_type = video.content_type
+            existing.is_live = video.is_live
             return existing
 
         record = Video(
@@ -57,6 +61,8 @@ class TranscriptRepository:
             title=video.title,
             published_at=video.published_at,
             url=video.url,
+            content_type=video.content_type,
+            is_live=video.is_live,
         )
         session.add(record)
         session.flush()
