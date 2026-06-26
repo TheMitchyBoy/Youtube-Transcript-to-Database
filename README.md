@@ -22,6 +22,9 @@ docker compose up -d
 
 Open http://localhost:8000 to use the settings dashboard.
 
+> **Note:** Run `python -m ytdb serve` to start the app — not bare `python -m ytdb`.
+> If you see repeated help text in logs, your start command is missing a subcommand.
+
 ### 2. Or run locally for development
 
 ```bash
