@@ -150,6 +150,47 @@ pytest
 - YouTube may rate-limit heavy usage; use `--max-videos` while testing.
 - Transcript availability depends on the uploader and YouTube's caption settings.
 
+## Deploy on Railway
+
+### 1. Create the project
+
+1. [Railway](https://railway.com) → **New Project** → **Deploy from GitHub repo**
+2. Select this repository — Railway detects the `Dockerfile` automatically
+
+### 2. Add PostgreSQL
+
+1. In your project, click **+ New** → **Database** → **PostgreSQL**
+2. Open your **web service** → **Variables**
+3. Add a reference variable:
+   - Name: `DATABASE_URL`
+   - Value: `${{Postgres.DATABASE_URL}}` (use Railway's variable reference UI)
+
+### 3. Configure the web service
+
+Railway reads `railway.toml` automatically. You should have:
+
+| Setting | Value |
+|---------|-------|
+| Start command | `/app/scripts/entrypoint.sh` |
+| Health check | `/health` |
+| `HOST` | `0.0.0.0` (optional — entrypoint default) |
+
+Do **not** set `DB_SSLMODE` when using Railway's private Postgres URL (`*.railway.internal`). SSL is only needed for public proxy URLs.
+
+### 4. Deploy
+
+Push to GitHub or click **Deploy** in Railway. In the deploy logs you should see:
+
+```
+Starting ytdb API on 0.0.0.0:<port>
+Application process started; database init running in background
+Database initialized and scheduler started
+```
+
+Open the generated `*.railway.app` URL — the web UI should load at `/`.
+
+> **Note:** `render.yaml` is for Render only. Railway uses `railway.toml`.
+
 ## Troubleshooting
 
 ### Container exits immediately
@@ -169,16 +210,25 @@ Common causes of `status: exited`:
 3. **Wrong port** — cloud platforms set `PORT`; the entrypoint reads it automatically
 4. **Stale Docker image** — rebuild with `docker compose up -d --build`
 
-### Application failed to respond (Render / cloud)
+### Application failed to respond (Railway / cloud)
+
+**Railway checklist:**
+
+1. **PostgreSQL linked** — `DATABASE_URL` must reference your Railway Postgres service
+2. **Start command** — `/app/scripts/entrypoint.sh` (set in `railway.toml`)
+3. **Health check** — `/health` (returns 200 before DB is fully ready)
+4. **Do not use** bare `python -m ytdb` as the start command
+5. **Private Postgres** — leave `DB_SSLMODE` unset for `*.railway.internal` URLs
+
+**Other platforms:**
 
 1. Set **`DATABASE_URL`** to your managed PostgreSQL connection string
-2. Set **`DB_SSLMODE=require`** for Render, Railway, Neon, and similar hosts
+2. Set **`DB_SSLMODE=require`** only for public cloud DB URLs (not Railway internal)
 3. Use start command **`/app/scripts/entrypoint.sh`** (Docker) or:
    ```
    uvicorn ytdb.api.app:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips '*'
    ```
-4. Health check path: **`/health`** (returns 200 while the DB is still connecting)
-5. On Render, deploy with the included `render.yaml` blueprint or link a Postgres database manually
+4. Health check path: **`/health`**
 
 Check deploy logs for `Starting ytdb API on 0.0.0.0:<port>`.
 

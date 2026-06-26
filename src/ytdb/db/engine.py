@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 import os
-from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
+from urllib.parse import parse_qs, urlparse
 
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 
-_CLOUD_DB_HOSTS = (
+_SSL_REQUIRED_HOSTS = (
     "render.com",
     "neon.tech",
     "supabase.co",
-    "railway.app",
+    "rlwy.net",
     "amazonaws.com",
 )
 
@@ -32,7 +32,12 @@ def get_sslmode(database_url: str) -> str | None:
         return query["sslmode"][0]
 
     hostname = parsed.hostname or ""
-    if any(marker in hostname for marker in _CLOUD_DB_HOSTS):
+
+    # Railway private networking does not use TLS between services.
+    if hostname.endswith(".railway.internal"):
+        return None
+
+    if any(marker in hostname for marker in _SSL_REQUIRED_HOSTS):
         return "require"
 
     return None

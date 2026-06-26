@@ -13,6 +13,16 @@ def test_get_sslmode_for_render_host():
     assert get_sslmode(url) == "require"
 
 
+def test_get_sslmode_skips_railway_internal():
+    url = "postgresql://user:pass@postgres.railway.internal:5432/railway"
+    assert get_sslmode(url) is None
+
+
+def test_get_sslmode_for_railway_public_proxy():
+    url = "postgresql://user:pass@roundhouse.proxy.rlwy.net:12345/railway"
+    assert get_sslmode(url) == "require"
+
+
 def test_get_sslmode_respects_env_override(monkeypatch):
     monkeypatch.setenv("DB_SSLMODE", "disable")
     url = "postgresql://user:pass@dpg-abc.oregon-postgres.render.com/ytdb"
