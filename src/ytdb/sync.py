@@ -1,0 +1,97 @@
+from __future__ import annotations
+
+import logging
+from dataclasses import dataclass
+
+from ytdb.config import get_settings
+from ytdb.db.repository import TranscriptRepository
+from ytdb.youtube.channel import ChannelClient, ChannelInfo, VideoInfo
+from ytdb.youtube.transcripts import TranscriptClient
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class SyncResult:
+    channel: ChannelInfo
+    videos_processed: int
+    transcripts_saved: int
+    transcripts_skipped: int
+    errors: int
+
+
+class SyncService:
+    def __init__(
+        self,
+        repository: TranscriptRepository | None = None,
+        channel_client: ChannelClient | None = None,
+        transcript_client: TranscriptClient | None = None,
+        preferred_languages: list[str] | None = None,
+    ) -> None:
+        settings = get_settings()
+        self.repository = repository or TranscriptRepository(settings.database_url)
+        self.channel_client = channel_client or ChannelClient()
+        self.transcript_client = transcript_client or TranscriptClient(preferred_languages)
+
+    def sync_channel(
+        self,
+        account: str,
+        max_videos: int | None = None,
+        skip_existing: bool = True,
+    ) -> SyncResult:
+        self.repository.init_db()
+
+        channel_info = self.channel_client.get_channel_info(account)
+        videos = self.channel_client.list_videos(account, max_videos=max_videos)
+
+        videos_processed = 0
+        transcripts_saved = 0
+        transcripts_skipped = 0
+        errors = 0
+
+        with self.repository.session() as session:
+            channel = self.repository.upsert_channel(session, channel_info)
+
+            for video_info in videos:
+                videos_processed += 1
+                try:
+                    saved = self._process_video(
+                        session, channel, video_info, skip_existing=skip_existing
+                    )
+                    if saved:
+                        transcripts_saved += 1
+                    else:
+                        transcripts_skipped += 1
+                except Exception:
+                    errors += 1
+                    logger.exception("Failed to process video %s", video_info.video_id)
+
+            session.commit()
+
+        return SyncResult(
+            channel=channel_info,
+            videos_processed=videos_processed,
+            transcripts_saved=transcripts_saved,
+            transcripts_skipped=transcripts_skipped,
+            errors=errors,
+        )
+
+    def _process_video(
+        self,
+        session,
+        channel,
+        video_info: VideoInfo,
+        *,
+        skip_existing: bool,
+    ) -> bool:
+        video = self.repository.upsert_video(session, channel, video_info)
+
+        if skip_existing and self.repository.has_transcript(session, video.id):
+            return False
+
+        transcript = self.transcript_client.fetch_transcript(video_info.video_id)
+        if transcript is None:
+            return False
+
+        self.repository.upsert_transcript(session, video, transcript)
+        return True

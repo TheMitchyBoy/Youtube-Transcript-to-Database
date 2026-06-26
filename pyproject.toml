@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ytdb"
+version = "0.1.0"
+description = "Fetch YouTube channel transcripts and store them in PostgreSQL"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "click>=8.1.7",
+    "python-dotenv>=1.0.1",
+    "sqlalchemy>=2.0.36",
+    "psycopg2-binary>=2.9.10",
+    "youtube-transcript-api>=1.0.3",
+    "yt-dlp>=2024.12.23",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+ytdb = "ytdb.cli:cli"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
